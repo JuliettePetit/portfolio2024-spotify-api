@@ -5,8 +5,12 @@ const querystring = require('querystring');
 var client_id = process.env.client_id;
 var client_secret = process.env.client_secret;
 var redirect_uri = 'http://localhost:8000/callback';
-var token =
-    {access_token: '', token_type: '', refresh_token: '', expires_in: ''};
+var token = {
+  access_token: null,
+  token_type: null,
+  refresh_token: null,
+  expires_in: null
+};
 var scope = 'user-read-currently-playing';
 
 var app = express();
@@ -58,7 +62,11 @@ app.get('/callback', async function(req, res) {
 });
 
 app.get('/current-song', async function(req, res) {
-  var song = {name: '', album: '', artist: '', status: '', date: ''};
+  if (!token.access_token) {
+    res.status(403);
+    res.json({error: 'access denied, not logged in'});
+  }
+  var song = {name: null, album: null, artist: null, date: null, image: null};
   authOptions = {
     url: 'https://api.spotify.com/v1/me/player/currently-playing',
     headers: {
@@ -74,8 +82,8 @@ app.get('/current-song', async function(req, res) {
     song.artist = music_json['item']['artists'][0]['name'];
     song.name = music_json['item']['name']
     song.date = music_json['item']['album']['release_date'];
-    console.log(music_json['item']['artists'][0]['name']);
-    res.status(200).send(song.name + ' by ' + song.artist);
+    song.image = music_json['item']['album']['images'][0];
+    res.status(200).json(song);
   }
 })
 
