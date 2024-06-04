@@ -59,7 +59,10 @@ app.get('/callback', async function(req, res) {
       body: formBody
     };
     var response = await fetch(authOptions.url, options);
-    var json = await response.json();
+    console.log('response1 ' + response.status);
+    const text = await response.text()
+    console.log(text);
+    var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
       expires_in: json['expires_in'],
@@ -94,7 +97,10 @@ app.get('/current-song', async function(req, res) {
   };
   var options = {headers: authOptions.headers, method: 'GET'};
   var response = await fetch(authOptions.url, options);
-  var music_json = await response.json();
+  console.log('response2 ' + response.status);
+  const text = await response.text();
+  console.log(text);
+  var music_json = JSON.parse(text);
   if (music_json['is_playing']) {
     song.album = music_json['item']['album']['name'];
     song.artist = music_json['item']['artists'][0]['name'];
