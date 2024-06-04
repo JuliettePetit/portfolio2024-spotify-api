@@ -86,7 +86,14 @@ app.get('/current-song', async function(req, res) {
     res.json({error: 'access denied, not logged in'});
     return;
   }
-  var song = {name: null, album: null, artist: null, date: null, image: null};
+  var song = {
+    name: null,
+    album: null,
+    artist: null,
+    date: null,
+    image: null,
+    is_playing: null
+  };
   authOptions = {
     url: 'https://api.spotify.com/v1/me/player/currently-playing',
     headers: {
@@ -98,17 +105,23 @@ app.get('/current-song', async function(req, res) {
   var options = {headers: authOptions.headers, method: 'GET'};
   var response = await fetch(authOptions.url, options);
   console.log('response2 ' + response.status);
+
+  if (response.status === 204) {
+    res.status(400);
+    res.json({error: 'nothing playing'});
+    return;
+  }
   const text = await response.text();
   console.log(text);
   var music_json = JSON.parse(text);
-  if (music_json['is_playing']) {
-    song.album = music_json['item']['album']['name'];
-    song.artist = music_json['item']['artists'][0]['name'];
-    song.name = music_json['item']['name']
-    song.date = music_json['item']['album']['release_date'];
-    song.image = music_json['item']['album']['images'][0];
-    res.status(200).json(song);
-  }
+
+  song.album = music_json['item']['album']['name'];
+  song.artist = music_json['item']['artists'][0]['name'];
+  song.name = music_json['item']['name']
+  song.date = music_json['item']['album']['release_date'];
+  song.image = music_json['item']['album']['images'][0];
+  song.is_playing = music_json['is_playing'];
+  res.status(200).json(song);
 })
 
 app.listen(process.env.PORT)
