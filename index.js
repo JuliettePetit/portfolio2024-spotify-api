@@ -2,9 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const querystring = require('querystring');
 
-var client_id = process.env.client_id;
-var client_secret = process.env.client_secret;
-var redirect_uri = 'http://localhost:8000/callback';
+var client_id = process.env.CLIENT_ID;
+var client_secret = process.env.CLIENT_SECRET;
+var redirect_uri = process.env.REDIRECT_URI;
 var token = {
   access_token: null,
   token_type: null,
@@ -87,4 +87,4 @@ app.get('/current-song', async function(req, res) {
   }
 })
 
-app.listen(8000)
+app.listen(process.env.PORT)
