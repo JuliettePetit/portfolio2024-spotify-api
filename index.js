@@ -67,7 +67,7 @@ app.get('/callback', async function(req, res) {
       token_type: json['token_type']
     };
     token[state] = t;
-    res.json(state);
+    res.redirect(process.env.BASE_URI + 'current-song?state=' + state)
   }
 });
 
@@ -83,7 +83,6 @@ app.get('/current-song', async function(req, res) {
     res.json({error: 'access denied, not logged in'});
     return;
   }
-  console.log(state, token[state]);
   var song = {name: null, album: null, artist: null, date: null, image: null};
   authOptions = {
     url: 'https://api.spotify.com/v1/me/player/currently-playing',
