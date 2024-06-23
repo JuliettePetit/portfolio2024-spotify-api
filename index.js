@@ -92,6 +92,8 @@ app.get('/current-song', async function(req, res) {
     artist: null,
     date: null,
     image: null,
+    duration_ms: null,
+    progress_ms: null,
     is_playing: null
   };
   authOptions = {
@@ -120,6 +122,8 @@ app.get('/current-song', async function(req, res) {
   song.name = music_json['item']['name']
   song.date = music_json['item']['album']['release_date'];
   song.image = music_json['item']['album']['images'][0];
+  song.duration_ms = music_json['item']['duration_ms']
+  song.progress_ms = music_json['progress_ms']
   song.is_playing = music_json['is_playing'];
   res.status(200).json(song);
 })
