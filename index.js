@@ -8,8 +8,10 @@ var client_secret = process.env.CLIENT_SECRET;
 var redirect_uri = process.env.REDIRECT_URI;
 var token = {};
 var scope = 'user-read-currently-playing';
-
+var cors = require('cors');
 var app = express();
+
+app.use(cors());
 
 app.get('/login', function(req, res) {
   /*var state = generateRandomString(16);*/
