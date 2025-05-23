@@ -113,7 +113,7 @@ async function refreshAccessToken(token) {
     var t = {
       access_token: json['access_token'],
       expires_in: json['expires_in'],
-      refresh_token: json['refresh_token'] || refresh_token,
+      refresh_token: json['refresh_token'],
       token_type: json['token_type']
     };
     return t;
