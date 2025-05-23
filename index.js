@@ -10,14 +10,12 @@ var token = {};
 var scope = 'user-read-currently-playing';
 var cors = require('cors');
 var app = express();
-var tokenExpiresAt;
 
 app.use(cors());
 
 app.get('/login', function(req, res) {
   /*var state = generateRandomString(16);*/
   var state = uuid();
-  tokenExpiresAt = Date.now() + 30 * 1000;
   res.redirect(
       'https://accounts.spotify.com/authorize?' + querystring.stringify({
         response_type: 'code',
@@ -70,7 +68,7 @@ app.get('/callback', async function(req, res) {
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
-      expires_in: json['expires_in'],
+      expires_at: Date.now() + json['expires_in'] * 1000,
       refresh_token: json['refresh_token'],
       token_type: json['token_type'],
     };
@@ -78,10 +76,6 @@ app.get('/callback', async function(req, res) {
     res.redirect(process.env.BASE_URI + 'current-song?state=' + state)
   }
 });
-
-function isTokenExpired() {
-  return Date.now() >= tokenExpiresAt;  // refresh 5 mins early
-}
 
 async function refreshAccessToken(token) {
   console.log('refreshAccessToken');
@@ -106,11 +100,10 @@ async function refreshAccessToken(token) {
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
-      expires_in: json['expires_in'],
+      expires_at: Date.now() + json['expires_in'] * 1000,
       refresh_token: json['refresh_token'] || token.refresh_token,
       token_type: json['token_type']
     };
-    tokenExpiresAt = Date.now() + 30 * 1000;
     return t;
   }
   console.error('response status != 200' + response.status);
@@ -133,7 +126,7 @@ app.get('/current-song', async function(req, res) {
     return;
   }
 
-  if (isTokenExpired()) {
+  if (Date.now() >= token[state].expires_at) {
     console.log('refreshing token..');
     console.log(token[state]);
     token[state] = await refreshAccessToken(token[state]);
