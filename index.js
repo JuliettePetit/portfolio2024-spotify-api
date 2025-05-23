@@ -110,6 +110,7 @@ async function refreshAccessToken(token) {
       refresh_token: json['refresh_token'] || token.refresh_token,
       token_type: json['token_type']
     };
+    tokenExpiresAt = Date.now() + 30 * 1000;
     return t;
   }
   console.error('response status != 200' + response.status);
@@ -119,16 +120,8 @@ async function refreshAccessToken(token) {
 }
 
 app.get('/current-song', async function(req, res) {
-  // refresh token
-
   var state = req.query.state || null;
-  if (isTokenExpired()) {
-    console.log('refreshing token..');
-    console.log(token[state]);
-    token[state] = await refreshAccessToken(token[state]);
-    console.log('refreshed token :');
-    console.log(token[state]);
-  };
+
   if (!state) {
     res.status(400);
     res.json({error: 'access denied, please provide a valid state'});
@@ -139,6 +132,15 @@ app.get('/current-song', async function(req, res) {
     res.json({error: 'access denied, not logged in'});
     return;
   }
+
+  if (isTokenExpired()) {
+    console.log('refreshing token..');
+    console.log(token[state]);
+    token[state] = await refreshAccessToken(token[state]);
+    console.log('refreshed token :');
+    console.log(token[state]);
+  };
+
   var song = {
     name: null,
     album: null,
