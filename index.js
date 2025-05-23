@@ -6,16 +6,18 @@ const querystring = require('querystring');
 var client_id = process.env.CLIENT_ID;
 var client_secret = process.env.CLIENT_SECRET;
 var redirect_uri = process.env.REDIRECT_URI;
-var token = {};
+var token = [{access_token, expires_in, refresh_token, token_type}];
 var scope = 'user-read-currently-playing';
 var cors = require('cors');
 var app = express();
+var tokenExpiresAt;
 
 app.use(cors());
 
 app.get('/login', function(req, res) {
   /*var state = generateRandomString(16);*/
   var state = uuid();
+  tokenExpiresAt = Date.now() + 3600 * 1000;
   res.redirect(
       'https://accounts.spotify.com/authorize?' + querystring.stringify({
         response_type: 'code',
@@ -47,6 +49,7 @@ app.get('/callback', async function(req, res) {
                  .toString('base64'))
       }
     };
+
     let formBody = [];
     for (var property in authOptions.form) {
       var encodedKey = encodeURIComponent(property);
@@ -62,21 +65,60 @@ app.get('/callback', async function(req, res) {
     };
     var response = await fetch(authOptions.url, options);
     console.log('response1 ' + response.status);
-    const text = await response.text()
+    const text = await response.text();
     console.log(text);
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
       expires_in: json['expires_in'],
       refresh_token: json['refresh_token'],
-      token_type: json['token_type']
+      token_type: json['token_type'],
     };
     token[state] = t;
     res.redirect(process.env.BASE_URI + 'current-song?state=' + state)
   }
 });
 
+function isTokenExpired() {
+  return Date.now() >=
+      tokenExpiresAt - (5 * 60 * 1000);  // refresh 5 mins early
+}
+
+async function refreshAccessToken(token) {
+  var refresh_token = token.refresh_token;
+  var authOptions = {
+    url: 'https://accounts.spotify.com/api/token',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' +
+          (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
+    },
+    form: {grant_type: 'refresh_token', refresh_token: refresh_token},
+    json: true
+  };
+  var options = {headers: authOptions.headers, method: 'POST', body: form};
+  var response = await fetch(authOptions.url, options);
+  if (response.ok && response.status === 200) {
+    const text = await response.text();
+    var json = JSON.parse(text);
+    var t = {
+      access_token: json['access_token'],
+      expires_in: json['expires_in'],
+      refresh_token: json['refresh_token'] || refresh_token,
+      token_type: json['token_type']
+    };
+    return t;
+  }
+  return null;
+}
+
 app.get('/current-song', async function(req, res) {
+  // refresh token
+  if (isTokenExpired()) {
+    console.log('refreshing token...' + token[state].refresh_token);
+    token[state] = await refreshAccessToken(token[state]);
+    console.log('refreshed token, new token is' + token[state].refresh_token);
+  };
   var state = req.query.state || null;
   if (!state) {
     res.status(400);
@@ -131,3 +173,4 @@ app.get('/current-song', async function(req, res) {
 })
 
 app.listen(process.env.PORT)
+
