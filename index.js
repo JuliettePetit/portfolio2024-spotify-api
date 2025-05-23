@@ -95,11 +95,17 @@ async function refreshAccessToken(token) {
     form: {grant_type: 'refresh_token', refresh_token: refresh_token},
     json: true
   };
-  var options = {
-    headers: authOptions.headers,
-    method: 'POST',
-    body: authOptions.form
-  };
+
+  let formBody = [];
+  for (var property in authOptions.form) {
+    var encodedKey = encodeURIComponent(property);
+    var encodedValue = encodeURIComponent(authOptions.form[property]);
+    formBody.push(encodedKey + '=' + encodedValue);
+  }
+  formBody = formBody.join('&');
+
+  var options = {headers: authOptions.headers, method: 'POST', body: formBody};
+
   var response = await fetch(authOptions.url, options);
   if (response.ok && response.status === 200) {
     const text = await response.text();
