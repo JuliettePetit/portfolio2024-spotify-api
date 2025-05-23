@@ -129,8 +129,10 @@ app.get('/current-song', async function(req, res) {
 
   var state = req.query.state || null;
   if (isTokenExpired()) {
+    console.log('refreshing token..');
     console.log(token[state]);
     token[state] = await refreshAccessToken(token[state]);
+    console.log('refreshed token :');
     console.log(token[state]);
   };
   if (!state) {
@@ -163,7 +165,6 @@ app.get('/current-song', async function(req, res) {
   };
   var options = {headers: authOptions.headers, method: 'GET'};
   var response = await fetch(authOptions.url, options);
-  console.log('response2 ' + response.status);
 
   if (response.status === 204) {
     res.status(400);
@@ -171,7 +172,6 @@ app.get('/current-song', async function(req, res) {
     return;
   }
   const text = await response.text();
-  console.log(text);
   var music_json = JSON.parse(text);
 
   song.album = music_json['item']['album']['name'];
