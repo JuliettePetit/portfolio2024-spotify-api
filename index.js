@@ -17,7 +17,7 @@ app.use(cors());
 app.get('/login', function(req, res) {
   /*var state = generateRandomString(16);*/
   var state = uuid();
-  tokenExpiresAt = Date.now() + 3600 * 1000;
+  tokenExpiresAt = Date.now() + 30 * 1000;
   res.redirect(
       'https://accounts.spotify.com/authorize?' + querystring.stringify({
         response_type: 'code',
@@ -81,7 +81,7 @@ app.get('/callback', async function(req, res) {
 
 function isTokenExpired() {
   return Date.now() >=
-      tokenExpiresAt - (5 * 60 * 1000);  // refresh 5 mins early
+      tokenExpiresAt;  // refresh 5 mins early
 }
 
 async function refreshAccessToken(token) {
@@ -96,7 +96,7 @@ async function refreshAccessToken(token) {
     form: {grant_type: 'refresh_token', refresh_token: refresh_token},
     json: true
   };
-  var options = {headers: authOptions.headers, method: 'POST', body: form};
+  var options = {headers: authOptions.headers, method: 'POST', body: authOptions.form};
   var response = await fetch(authOptions.url, options);
   if (response.ok && response.status === 200) {
     const text = await response.text();
@@ -114,12 +114,13 @@ async function refreshAccessToken(token) {
 
 app.get('/current-song', async function(req, res) {
   // refresh token
+	
+  var state = req.query.state || null;
   if (isTokenExpired()) {
     console.log('refreshing token...' + token[state].refresh_token);
     token[state] = await refreshAccessToken(token[state]);
     console.log('refreshed token, new token is' + token[state].refresh_token);
   };
-  var state = req.query.state || null;
   if (!state) {
     res.status(400);
     res.json({error: 'access denied, please provide a valid state'});
