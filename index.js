@@ -84,36 +84,30 @@ function isTokenExpired() {
 }
 
 async function refreshAccessToken(token) {
-  var refresh_token = token.refresh_token;
-  var authOptions = {
-    url: 'https://accounts.spotify.com/api/token',
+  console.log('refreshAccessToken');
+  console.log(token.refresh_token);
+  const options = {
+    method: 'POST',
     headers: {
-      'content-type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Basic ' +
           (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
     },
-    form: {grant_type: 'refresh_token', refresh_token: refresh_token},
-    json: true
-  };
-
-  let formBody = [];
-  for (var property in authOptions.form) {
-    var encodedKey = encodeURIComponent(property);
-    var encodedValue = encodeURIComponent(authOptions.form[property]);
-    formBody.push(encodedKey + '=' + encodedValue);
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: token.refresh_token,
+      client_id: client_id
+    }),
   }
-  formBody = formBody.join('&');
 
-  var options = {headers: authOptions.headers, method: 'POST', body: formBody};
-
-  var response = await fetch(authOptions.url, options);
+  var response = await fetch('https://accounts.spotify.com/api/token', options);
   if (response.ok && response.status === 200) {
     const text = await response.text();
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
       expires_in: json['expires_in'],
-      refresh_token: json['refresh_token'],
+      refresh_token: json['refresh_token'] || token.refresh_token,
       token_type: json['token_type']
     };
     return t;
