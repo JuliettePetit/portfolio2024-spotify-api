@@ -129,9 +129,9 @@ app.get('/current-song', async function(req, res) {
 
   var state = req.query.state || null;
   if (isTokenExpired()) {
-    console.log('refreshing token...' + token[state].refresh_token);
+    console.log(token[state]);
     token[state] = await refreshAccessToken(token[state]);
-    console.log('refreshed token, new token is' + token[state].refresh_token);
+    console.log(token[state]);
   };
   if (!state) {
     res.status(400);
