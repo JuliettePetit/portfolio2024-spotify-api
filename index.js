@@ -68,7 +68,7 @@ app.get('/callback', async function(req, res) {
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
-      expires_at: Date.now() + json['expires_in'] * 1000,
+      expires_at: Date.now() + 30 * 1000,  // json['expires_in']
       refresh_token: json['refresh_token'],
       token_type: json['token_type'],
     };
@@ -100,7 +100,7 @@ async function refreshAccessToken(token) {
     var json = JSON.parse(text);
     var t = {
       access_token: json['access_token'],
-      expires_at: Date.now() + json['expires_in'] * 1000,
+      expires_at: Date.now() + 30 * 1000,  // json['expires_in']
       refresh_token: json['refresh_token'] || token.refresh_token,
       token_type: json['token_type']
     };
