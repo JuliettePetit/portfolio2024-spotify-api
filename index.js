@@ -80,8 +80,7 @@ app.get('/callback', async function(req, res) {
 });
 
 function isTokenExpired() {
-  return Date.now() >=
-      tokenExpiresAt;  // refresh 5 mins early
+  return Date.now() >= tokenExpiresAt;  // refresh 5 mins early
 }
 
 async function refreshAccessToken(token) {
@@ -96,7 +95,11 @@ async function refreshAccessToken(token) {
     form: {grant_type: 'refresh_token', refresh_token: refresh_token},
     json: true
   };
-  var options = {headers: authOptions.headers, method: 'POST', body: authOptions.form};
+  var options = {
+    headers: authOptions.headers,
+    method: 'POST',
+    body: authOptions.form
+  };
   var response = await fetch(authOptions.url, options);
   if (response.ok && response.status === 200) {
     const text = await response.text();
@@ -109,12 +112,15 @@ async function refreshAccessToken(token) {
     };
     return t;
   }
+  console.error('response status != 200' + response.status);
+  console.error(await response.text());
+
   return null;
 }
 
 app.get('/current-song', async function(req, res) {
   // refresh token
-	
+
   var state = req.query.state || null;
   if (isTokenExpired()) {
     console.log('refreshing token...' + token[state].refresh_token);
@@ -174,4 +180,3 @@ app.get('/current-song', async function(req, res) {
 })
 
 app.listen(process.env.PORT)
-
